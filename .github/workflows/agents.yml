@@ -64,7 +64,8 @@ jobs:
             Description:
             ${{ github.event.issue.body }}
 
-            1. Comment on the issue with the plan you intend to follow.
+            1. Comment on the issue with the plan you intend to follow, then
+               continue immediately: posting the plan is not a stopping point.
             2. Implement on a new branch, staying within your role's boundaries.
             3. Run lint and tests; if they fail, fix them.
             4. Check whether main changed docs/api/ or docs/alignment/ since the
@@ -78,12 +79,12 @@ jobs:
                section ("none" if none). With an alignment impact, add the
                alignment-needed label to the PR (gh pr edit --add-label).
             7. Comment on the issue with the PR link and a five-line summary.
-            Do not merge. Do not close the issue. Do not touch main.
-            Do not start other agents: alignment tasks are created by the user.
-             You are running unattended in CI: nobody will reply during this run.
+            You are running unattended in CI: nobody will reply during this run.
             Never end your turn to wait for approval. The run ends only with an open
             pull request, or with a comment on the issue explaining exactly why you
             could not continue (which role, which step, which error).
+            Do not merge. Do not close the issue. Do not touch main.
+            Do not start other agents: alignment tasks are created by the user.
           # build and test commands of the stack: npm/npx, uv, make
           claude_args: >-
             --max-turns 40
