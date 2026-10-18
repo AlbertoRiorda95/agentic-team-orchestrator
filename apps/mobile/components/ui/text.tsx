@@ -15,7 +15,7 @@ function Text({
   const Component = asChild ? Slot.Text : RNText;
   return (
     <Component
-      className={cn('font-native-sans text-base text-fg', textClass, className)}
+      className={cn('font-native-sans text-base leading-body text-fg', textClass, className)}
       {...props}
     />
   );

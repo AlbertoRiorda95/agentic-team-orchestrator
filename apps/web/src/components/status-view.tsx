@@ -64,7 +64,7 @@ function Checks({ result }: { result: ReadinessResult | null }) {
   return (
     <ul className="m-0 flex w-full list-none flex-col gap-2 p-0">
       {result.checks.map((check) => (
-        <li key={check.name} className="flex items-center justify-between gap-4 text-sm">
+        <li key={check.name} className="flex min-h-8 items-center justify-between gap-4 text-sm">
           <span className="text-fg-muted">{check.label}</span>
           <Badge>
             {check.ok ? (
@@ -83,15 +83,14 @@ function Checks({ result }: { result: ReadinessResult | null }) {
 /** Presentational status page: no network calls, everything comes from props. */
 export function StatusView({ loading, result, onRetry, appVersion }: StatusViewProps) {
   const apiVersion = result && result.kind !== 'unreachable' ? result.version : undefined;
-  const primary = !loading && (result?.kind === 'error' || result?.kind === 'unreachable');
+  // Keep the variant of the last result while re-checking, so the button does not flicker.
+  const primary = result?.kind === 'error' || result?.kind === 'unreachable';
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-narrow flex-col items-center gap-6 px-4 pt-8 pb-8 md:justify-center md:pt-0">
-      <img
-        src={logo}
-        alt="DevOrchestrator logo"
-        className="size-12 rounded-md object-cover object-[50%_43%] scale-150"
-      />
+      <div className="size-12 shrink-0 overflow-hidden rounded-md">
+        <img src={logo} alt="DevOrchestrator logo" className="size-12 scale-150 object-cover" />
+      </div>
       <div className="flex flex-col items-center gap-1 text-center">
         <h1 className="m-0 text-2xl leading-heading font-semibold text-fg">DevOrchestrator</h1>
         <p className="m-0 text-sm text-fg-muted">AI agents. Real software.</p>
@@ -100,7 +99,7 @@ export function StatusView({ loading, result, onRetry, appVersion }: StatusViewP
       <div role="status" aria-live="polite" className="flex w-full flex-col items-center gap-4">
         <StatusLine loading={loading} result={result} />
         <Checks result={result} />
-        {!loading && result?.kind === 'unreachable' ? (
+        {result?.kind === 'unreachable' ? (
           <p className="m-0 font-mono text-xs break-all text-fg-muted">{result.url}</p>
         ) : null}
       </div>
@@ -112,8 +111,8 @@ export function StatusView({ loading, result, onRetry, appVersion }: StatusViewP
       <Button
         size="lg"
         variant={primary ? 'default' : 'secondary'}
-        disabled={loading}
-        onClick={onRetry}
+        aria-disabled={loading}
+        onClick={loading ? undefined : onRetry}
       >
         Check again
       </Button>
