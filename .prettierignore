@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.expo
+backend
+docs
+.claude
+.github
+ci
+scripts
+package-lock.json
+packages/api-client/src/schema.d.ts
+packages/tokens/src/generated
+packages/tokens/dist
