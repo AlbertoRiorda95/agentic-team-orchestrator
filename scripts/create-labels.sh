@@ -6,3 +6,4 @@ for r in designer frontend backend optimizer devops security team; do
   gh label create "agent:$r" --description "Task for the $r agent" --color 5319e7 --force
 done
 gh label create "alignment-needed" --description "An agent changed something other roles rely on" --color d93f0b --force
+gh label create "ai-review" --description "Ask Claude to review this PR (claude-review.yml)" --color 0e8a16 --force
