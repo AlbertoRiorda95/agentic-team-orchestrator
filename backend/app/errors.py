@@ -70,7 +70,8 @@ async def handle_validation_error(request: Request, exc: Exception) -> ProblemRe
 
 
 async def handle_unexpected_error(request: Request, exc: Exception) -> ProblemResponse:
-    logger.exception("unhandled error on %s %s", request.method, request.url.path, exc_info=exc)
+    # %r: the path comes from the client, keep control characters out of the log
+    logger.exception("unhandled error on %s %r", request.method, request.url.path, exc_info=exc)
     return problem_response(HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
