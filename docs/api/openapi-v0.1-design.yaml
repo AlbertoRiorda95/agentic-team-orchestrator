@@ -1,3 +1,7 @@
+# Design reference: the v0.1 contract written in the project design
+# (docs/design/project.md). Hand-written, NOT generated, NOT used by the clients.
+# The live contract is docs/api/openapi.yaml, exported from FastAPI with
+# `make openapi`; later features export their part of this file from the code.
 openapi: 3.1.0
 info:
   title: DevOrchestrator API
