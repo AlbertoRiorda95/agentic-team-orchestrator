@@ -53,6 +53,9 @@ jobs:
           enable-cache: ${{ hashFiles('backend/uv.lock') != '' }}
           cache-dependency-glob: backend/uv.lock
       - uses: anthropics/claude-code-action@v1
+        env:
+          # In CI everything runs in the foreground: background subagents or commands are lost when the run ends.
+          CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
@@ -116,6 +119,7 @@ jobs:
     env:
       # test database only, on the job's service container
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/devorchestrator_test
+      CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
       # toolchain, so the agent can install, lint and test
@@ -128,6 +132,9 @@ jobs:
           enable-cache: ${{ hashFiles('backend/uv.lock') != '' }}
           cache-dependency-glob: backend/uv.lock
       - uses: anthropics/claude-code-action@v1
+        env:
+          # In CI everything runs in the foreground: background subagents or commands are lost when the run ends.
+          CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
@@ -148,7 +155,9 @@ jobs:
                plan is not a stopping point.
             3. Work on a single new branch. For each role in turn: delegate its part
                with the issue context and the previous roles' summaries; then make
-               sure its work is committed and pushed before the next role starts.
+               sure its work is committed and pushed before the next role starts. 
+               Delegate in the foreground: wait for each subagent's result before the next
+               step, and never end your turn while a subagent is still running.
             4. After each role, check docs/alignment/ for entries with
                "status: open". If the affected roles are in the "Roles:" list,
                handle them now (designer first if listed, then the affected roles)
