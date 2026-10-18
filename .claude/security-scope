@@ -1,0 +1,3 @@
+# Hosts the security agent may send requests to, one per line. Never production.
+localhost
+127.0.0.1

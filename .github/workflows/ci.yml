@@ -1,0 +1,143 @@
+# .github/workflows/ci.yml: the project's CI. It checks every PR, whoever
+# wrote it (you or an agent): build, test, SBOM and licenses, vulnerabilities.
+# Toolchain: Node 24 (npm workspaces) and uv with Python 3.14.
+# Actions are pinned to a commit SHA; the comment says which release it is.
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: devorchestrator_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # test database only, on the job's service container
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/devorchestrator_test
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: 24
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          python-version: "3.14"
+          enable-cache: ${{ hashFiles('backend/uv.lock') != '' }}
+          cache-dependency-glob: backend/uv.lock
+      # the steps run once the scaffolding exists (Makefile, backend/, apps/)
+      - name: Install
+        if: hashFiles('Makefile') != ''
+        run: make install
+      - name: Lint
+        if: hashFiles('Makefile') != ''
+        run: make lint
+      - name: Type check (backend)
+        if: hashFiles('backend/pyproject.toml') != ''
+        run: uv run --directory backend mypy
+      - name: Type check (TypeScript)
+        if: hashFiles('package-lock.json') != ''
+        run: npm run typecheck
+      - name: API contract is up to date
+        if: hashFiles('backend/pyproject.toml') != ''
+        run: |
+          make openapi
+          git diff --exit-code docs/api/openapi.yaml || {
+            echo "::error::docs/api/openapi.yaml differs from the FastAPI schema: run 'make openapi' and commit it."
+            exit 1
+          }
+      - name: Migrations apply
+        if: hashFiles('backend/alembic.ini') != ''
+        run: uv run --directory backend alembic upgrade head
+      - name: Build
+        if: hashFiles('Makefile') != ''
+        run: make build
+      - name: Test
+        if: hashFiles('Makefile') != ''
+        run: make test
+      - name: Mobile bundle (local export, no EAS)
+        if: hashFiles('apps/mobile/package.json') != ''
+        working-directory: apps/mobile
+        run: npx expo export --platform all
+
+  sbom-licenses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: 24
+          cache: ${{ hashFiles('package-lock.json') != '' && 'npm' || '' }}
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          python-version: "3.14"
+      # dependencies installed without running their scripts: license data come from them
+      - name: Install npm dependencies
+        if: hashFiles('package-lock.json') != ''
+        run: npm ci --ignore-scripts
+      - name: Install Python dependencies
+        if: hashFiles('backend/uv.lock') != ''
+        run: uv sync --directory backend --frozen
+      - run: ./ci/install-scanners.sh
+      - run: ./ci/scan.sh sbom-licenses
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        if: always()
+        with:
+          name: sbom-and-licenses
+          path: reports/
+          retention-days: 90
+
+  vulnerabilities:
+    needs: sbom-licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: sbom-and-licenses
+          path: reports/
+      - run: ./ci/install-scanners.sh
+      # the container image is scanned too, when the project has a Dockerfile
+      - name: Build the image
+        if: hashFiles('backend/Dockerfile') != ''
+        run: |
+          docker build -f backend/Dockerfile -t devorchestrator-api:ci .
+          echo "IMAGE=devorchestrator-api:ci" >> "$GITHUB_ENV"
+      - run: ./ci/scan.sh vulnerabilities
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        if: always()
+        with:
+          name: vulnerabilities
+          path: |
+            reports/grype.*
+            reports/trivy-*.json
+          retention-days: 90
+      # Optional: show the findings in the Security tab (code scanning; on private
+      # repositories it needs GitHub Code Security). Add "security-events: write"
+      # to the job permissions and uncomment.
+      # - uses: github/codeql-action/upload-sarif@<sha>  # pin a release SHA
+      #   if: always()
+      #   with:
+      #     sarif_file: reports/grype.sarif

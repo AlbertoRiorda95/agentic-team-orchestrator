@@ -1,0 +1,159 @@
+# .github/workflows/agents.yml
+# Routes issues labeled agent:<role> to the right agent.
+# Every role runs on Claude Code (architecture C), with the subscription
+# token in the CLAUDE_CODE_OAUTH_TOKEN secret.
+# The agent:team label starts one coordinator that runs several Claude roles
+# in sequence on the same branch; list them in the issue body, for example
+# "Roles: backend, frontend".
+name: Agents
+on:
+  issues:
+    types: [labeled]
+
+concurrency:
+  group: issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  claude:
+    if: >-
+      startsWith(github.event.label.name, 'agent:') &&
+      github.event.label.name != 'agent:team'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+      actions: read
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: devorchestrator_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # test database only, on the job's service container
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/devorchestrator_test
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+      # toolchain, so the agent can install, lint and test
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: 24
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          python-version: "3.14"
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are the "${{ github.event.label.name }}" agent (drop the "agent:"
+            prefix to get the role). Follow docs/roles/<role>.md and AGENTS.md.
+
+            Task: issue #${{ github.event.issue.number }}
+            Title: ${{ github.event.issue.title }}
+            Description:
+            ${{ github.event.issue.body }}
+
+            1. Comment on the issue with the plan you intend to follow.
+            2. Implement on a new branch, staying within your role's boundaries.
+            3. Run lint and tests; if they fail, fix them.
+            4. Check whether main changed docs/api/ or docs/alignment/ since the
+               issue was opened; adapt or report it.
+            5. If your change is an alignment change (AGENTS.md > Alignment
+               changes), add the entry under docs/alignment/ in the same branch.
+            6. Push and open a pull request that closes the issue
+               (gh pr create); if you cannot, post the pre-filled PR link.
+               Description: what you changed, why, what you decided NOT to do,
+               what the reviewer must check, and an "## Alignment impact"
+               section ("none" if none). With an alignment impact, add the
+               alignment-needed label to the PR (gh pr edit --add-label).
+            7. Comment on the issue with the PR link and a five-line summary.
+            Do not merge. Do not close the issue. Do not touch main.
+            Do not start other agents: alignment tasks are created by the user.
+          # build and test commands of the stack: npm/npx, uv, make
+          claude_args: >-
+            --max-turns 40
+            --model ${{ contains(fromJSON('["agent:designer","agent:frontend"]'), github.event.label.name) && 'claude-sonnet-5-5' || 'claude-opus-5-5' }}
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(uv:*),Bash(make:*),Bash(gh pr create:*),Bash(gh pr edit:*),Bash(gh pr view:*),Bash(gh issue view:*),Bash(gh issue comment:*)"
+
+  team:
+    # One issue, several roles, one branch, one PR. Claude roles only.
+    if: github.event.label.name == 'agent:team'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+      actions: read
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: devorchestrator_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # test database only, on the job's service container
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/devorchestrator_test
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+      # toolchain, so the agent can install, lint and test
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: 24
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          python-version: "3.14"
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are the coordinator of a team task (AGENTS.md > Team tasks).
+            You do not write code yourself: you delegate to the subagents in
+            .claude/agents/.
+
+            Task: issue #${{ github.event.issue.number }}
+            Title: ${{ github.event.issue.title }}
+            Description:
+            ${{ github.event.issue.body }}
+
+            1. Read the "Roles:" line of the description. Delegate ONLY to those
+               roles, in that order. If the line is missing, comment on the issue
+               asking for it and stop.
+            2. Comment on the issue with the plan: which role does what, in order.
+            3. Work on a single new branch. For each role in turn: delegate its part
+               with the issue context and the previous roles' summaries; then make
+               sure its work is committed and pushed before the next role starts.
+            4. After each role, check docs/alignment/ for entries with
+               "status: open". If the affected roles are in the "Roles:" list,
+               handle them now (designer first if listed, then the affected roles)
+               and mark them resolved. If a decision is needed or an affected role
+               is not listed, leave the entry open and say so in the PR.
+            5. Run lint and tests on the final result.
+            6. Open one pull request that closes the issue (gh pr create); if you
+               cannot, post the pre-filled link. Description: one section per role,
+               what you decided NOT to do, what the reviewer must check, and
+               "## Alignment impact". Label it alignment-needed if entries are
+               still open.
+            7. Comment on the issue with the PR link and a summary per role.
+            Do not merge. Do not touch main. Never delegate to roles that are not
+            in the "Roles:" line.
+          # build and test commands of the stack: npm/npx, uv, make
+          claude_args: >-
+            --max-turns 100
+            --model claude-sonnet-5-5
+            --allowedTools "Agent,Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(uv:*),Bash(make:*),Bash(gh pr create:*),Bash(gh pr edit:*),Bash(gh pr view:*),Bash(gh issue view:*),Bash(gh issue comment:*)"

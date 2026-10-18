@@ -1,0 +1,9 @@
+# Critical paths always require your review.
+/backend/migrations/      @AlbertoRiorda95
+/backend/app/auth/        @AlbertoRiorda95
+/docs/api/openapi.yaml    @AlbertoRiorda95
+/.github/                 @AlbertoRiorda95
+/.claude/                 @AlbertoRiorda95
+/ci/                      @AlbertoRiorda95
+/infra/                   @AlbertoRiorda95
+/deploy/                  @AlbertoRiorda95
