@@ -80,6 +80,10 @@ jobs:
             7. Comment on the issue with the PR link and a five-line summary.
             Do not merge. Do not close the issue. Do not touch main.
             Do not start other agents: alignment tasks are created by the user.
+             You are running unattended in CI: nobody will reply during this run.
+            Never end your turn to wait for approval. The run ends only with an open
+            pull request, or with a comment on the issue explaining exactly why you
+            could not continue (which role, which step, which error).
           # build and test commands of the stack: npm/npx, uv, make
           claude_args: >-
             --max-turns 40
@@ -139,6 +143,8 @@ jobs:
                roles, in that order. If the line is missing, comment on the issue
                asking for it and stop.
             2. Comment on the issue with the plan: which role does what, in order.
+               Then continue immediately with step 3 in this same run: posting the
+               plan is not a stopping point.
             3. Work on a single new branch. For each role in turn: delegate its part
                with the issue context and the previous roles' summaries; then make
                sure its work is committed and pushed before the next role starts.
@@ -155,7 +161,10 @@ jobs:
                still open.
             7. Comment on the issue with the PR link and a summary per role.
             Do not merge. Do not touch main. Never delegate to roles that are not
-            in the "Roles:" line.
+            in the "Roles:" line.  You are running unattended in CI: nobody will reply during this run.
+            Never end your turn to wait for approval. The run ends only with an open
+            pull request, or with a comment on the issue explaining exactly why you
+            could not continue (which role, which step, which error).
           # build and test commands of the stack: npm/npx, uv, make
           claude_args: >-
             --max-turns 100
