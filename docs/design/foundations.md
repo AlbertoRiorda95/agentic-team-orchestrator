@@ -212,6 +212,84 @@ Breaking for existing clients: no (there are no clients yet).
 ## Open questions
 - (none)
 
+## Review (task 4, 2026-10-18)
+Scope: `apps/web/src/components/status-view.tsx`, `apps/mobile/components/status-view.tsx`,
+the `ui/` Button and Badge of both apps, `packages/shared`, `packages/tokens`.
+
+Method and limit: this round was a code review against the spec and the design
+system. The designer session had no browser or shell tools, so the pages were NOT
+opened at 320, 768 and 1280 px nor on Expo web. Items marked "(verify)" must be
+checked by frontend in the browser before closing; a follow-up visual pass is
+needed once someone can run the dev servers.
+
+Matches the spec (no action): layout order, copy of the five states, state icons
+and colors, `role="status"` and `aria-live` on web, `accessibilityRole="summary"`
+and live region on mobile, decorative icons hidden, `lang` and `<title>`, reduced
+motion swap (spinner to clock), failed rows first, "API —" fallback, 44 px button,
+tokens only (no literal values in `apps/`), mobile fonts gate with the splash screen.
+
+Feedback for frontend (task 5). Format as in the designer role; five items, the
+most severe. Lower-priority findings are listed after.
+
+- [IMPORTANT] apps/mobile/components/status-view.tsx:106-109 — the page is not
+  placed in the safe area (no `SafeAreaView` or insets), so on a phone with a
+  notch or a gesture bar the logo or the button can sit under system UI; the spec
+  says "vertically centered in the safe area" — wrap in `SafeAreaView` from
+  `react-native-safe-area-context` (or add `useSafeAreaInsets` to the content
+  padding, `4`/`8` plus the inset) and keep `justify-center`.
+- [IMPORTANT] apps/mobile/components/ui/text.tsx:18 and
+  apps/mobile/components/status-view.tsx:119 — no line height is set anywhere on
+  mobile (the web gets 1.5 from `body` in index.css; React Native has no
+  inheritance), so body text uses the font's default and the `h1` is not 1.2 —
+  add `leading-body` to the base `Text` class and `leading-heading` on the
+  `h1` (the preset already exposes both).
+- [IMPORTANT] apps/web/src/components/status-view.tsx:90-94 — the logo `img` has
+  `scale-150` without a clipping wrapper (mobile has one), so it renders at 72 px
+  instead of 48 px and bleeds out of its box, and the two apps show different
+  logos (verify at 320 px) — wrap it in a `size-12 overflow-hidden rounded-md`
+  element with the same crop as mobile and scale the image inside, or drop the
+  crop if the result is acceptable at 48 px; both apps must render the same 48 px
+  mark.
+- [IMPORTANT] apps/web/src/components/status-view.tsx:112-119 — the button is
+  `disabled` while loading, so a keyboard user who presses "Check again" loses
+  focus (the browser moves it to `body`) and the 2 px focus ring disappears
+  during the check — keep it focusable: `aria-disabled` plus ignoring `onClick`
+  while loading, with the disabled look (`aria-disabled:opacity-60`,
+  `aria-disabled:pointer-events-none`); same for mobile where a screen reader
+  user gets the same effect (use `accessibilityState.busy` and keep `disabled`
+  only for the visual if VoiceOver or TalkBack loses focus; verify).
+- [NICE-TO-HAVE] apps/web/src/components/status-view.tsx:86 and
+  apps/mobile/components/status-view.tsx:103 — `primary` is `false` while
+  loading, so after an error the button flips from primary to secondary during
+  the re-check and back again, a flicker on the one control the user is watching —
+  keep the variant of the last result (`result?.kind`) while loading; use
+  secondary only when there is no result yet.
+
+Also found, not blocking (do them in the same round if cheap):
+- Web check rows (status-view.tsx:67) are about 24 px high; the design system
+  asks for compact 32 px rows on web: add `min-h-8`.
+- Buttons use `transition-colors duration-fast`; add `motion-reduce:transition-none`.
+- The "URL tried" line and the check rows disappear while loading, so the page
+  jumps in height on every re-check; acceptable for now, revisit in `app-shell`.
+- Add a test per state for the keyboard flow (focus stays on the button after
+  activation) once the item above is fixed.
+
+Decisions taken in this review (frontend additions to the tokens, from the
+alignment entry `2026-10-18-3-frontend.md`):
+- Accepted as part of the token set: `layout.touch` 44 px (`min-h-touch`),
+  `primary-foreground` `#FFFFFF`, `accent-violet-text` `#8B6BFB`, `motion.fast`
+  120 ms and `motion.base` 200 ms, and the per-weight native font families
+  (`font-native-*`, mobile only). All of them restate values already in the design
+  system, so no token is new in substance.
+- Border: no border token for now. Secondary buttons and badges keep `fg-subtle`
+  (5.6:1 on `bg`, above the 3:1 needed for UI borders). A real `border` token
+  will be proposed with the first form (`auth-and-users`), where the field border
+  needs to be seen on `surface` as well.
+- Logo: `logo.png` has a light background and cannot sit on `bg`, so the page uses
+  the app icon. Accepted as interim; the crop must be the same on both apps (item
+  above). A transparent square mark in `docs/design/brand/` would replace the
+  crop; it is a brand asset and is not produced in this task.
+
 ## Task breakdown
 | # | Role | Task | Depends on |
 |---|---|---|---|
