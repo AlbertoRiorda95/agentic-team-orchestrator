@@ -1,4 +1,5 @@
 import { ActivityIndicator, Image, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   CircleCheck,
   CircleX,
@@ -100,48 +101,55 @@ function Checks({ result }: { result: ReadinessResult | null }) {
 /** Presentational status page: no network calls, everything comes from props. */
 export function StatusView({ loading, result, onRetry, appVersion }: StatusViewProps) {
   const apiVersion = result && result.kind !== 'unreachable' ? result.version : undefined;
-  const primary = !loading && (result?.kind === 'error' || result?.kind === 'unreachable');
+  // Keep the variant of the last result while re-checking, so the button does not flicker.
+  const primary = result?.kind === 'error' || result?.kind === 'unreachable';
 
   return (
-    <ScrollView
-      className="flex-1 bg-bg"
-      contentContainerClassName="flex-grow items-center justify-center gap-6 px-4 py-8"
-    >
-      <View className="size-12 overflow-hidden rounded-md">
-        <Image
-          source={logo}
-          accessibilityLabel="DevOrchestrator logo"
-          resizeMode="cover"
-          className="size-12 scale-150"
-        />
-      </View>
-      <View className="items-center gap-1">
-        <Text accessibilityRole="header" className="font-native-sans-semibold text-2xl">
-          DevOrchestrator
-        </Text>
-        <Text className="text-sm text-fg-muted">AI agents. Real software.</Text>
-      </View>
-
-      <View accessibilityLiveRegion="polite" className="w-full items-center gap-4">
-        <StatusLine loading={loading} result={result} />
-        <Checks result={result} />
-        {!loading && result?.kind === 'unreachable' ? (
-          <Text className="text-center font-native-mono text-xs text-fg-muted">{result.url}</Text>
-        ) : null}
-      </View>
-
-      <Text className="font-native-mono text-xs text-fg-subtle">
-        {formatVersions(apiVersion, { name: 'Mobile', version: appVersion })}
-      </Text>
-
-      <Button
-        className="w-full"
-        variant={primary ? 'default' : 'secondary'}
-        disabled={loading}
-        onPress={onRetry}
+    <SafeAreaView className="flex-1 bg-bg">
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="flex-grow items-center justify-center gap-6 px-4 py-8"
       >
-        <Text>Check again</Text>
-      </Button>
-    </ScrollView>
+        <View className="size-12 overflow-hidden rounded-md">
+          <Image
+            source={logo}
+            accessibilityLabel="DevOrchestrator logo"
+            resizeMode="cover"
+            className="size-12 scale-150"
+          />
+        </View>
+        <View className="items-center gap-1">
+          <Text
+            accessibilityRole="header"
+            className="font-native-sans-semibold text-2xl leading-heading"
+          >
+            DevOrchestrator
+          </Text>
+          <Text className="text-sm text-fg-muted">AI agents. Real software.</Text>
+        </View>
+
+        <View accessibilityLiveRegion="polite" className="w-full items-center gap-4">
+          <StatusLine loading={loading} result={result} />
+          <Checks result={result} />
+          {result?.kind === 'unreachable' ? (
+            <Text className="text-center font-native-mono text-xs text-fg-muted">{result.url}</Text>
+          ) : null}
+        </View>
+
+        <Text className="font-native-mono text-xs text-fg-subtle">
+          {formatVersions(apiVersion, { name: 'Mobile', version: appVersion })}
+        </Text>
+
+        <Button
+          className={loading ? 'w-full opacity-60' : 'w-full'}
+          variant={primary ? 'default' : 'secondary'}
+          // Not `disabled`: the button stays focusable for screen readers while checking.
+          accessibilityState={{ disabled: loading, busy: loading }}
+          onPress={loading ? undefined : onRetry}
+        >
+          <Text>Check again</Text>
+        </Button>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

@@ -35,7 +35,10 @@ describe('StatusPage', () => {
     render(<StatusPage baseUrl={BASE} fetch={pending} />);
 
     expect(screen.getByText('Checking the API…')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Check again' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Check again' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     expect(screen.queryByText('Database')).not.toBeInTheDocument();
   });
 
@@ -83,10 +86,42 @@ describe('StatusPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Check again' }));
 
     expect(screen.getByText('Checking the API…')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Check again' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Check again' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     release(await ok());
     expect(await screen.findByText('All systems operational')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the focus on the button, and ignores clicks, while it checks', async () => {
+    const slow: Answer = () => new Promise<Response>(() => {});
+    const fetchMock = fakeFetch(unreachable, slow);
+    render(<StatusPage baseUrl={BASE} fetch={fetchMock} />);
+    await screen.findByText('API unreachable');
+    const button = screen.getByRole('button', { name: 'Check again' });
+
+    await userEvent.tab();
+    await userEvent.keyboard('{Enter}');
+    expect(screen.getByText('Checking the API…')).toBeInTheDocument();
+    expect(button).toHaveFocus();
+
+    await userEvent.keyboard('{Enter}');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the primary look and the previous details while re-checking after an error', async () => {
+    const slow: Answer = () => new Promise<Response>(() => {});
+    render(<StatusPage baseUrl={BASE} fetch={fakeFetch(unreachable, slow)} />);
+    await screen.findByText('API unreachable');
+    const button = screen.getByRole('button', { name: 'Check again' });
+    expect(button).toHaveClass('bg-primary');
+
+    await userEvent.click(button);
+
+    expect(button).toHaveClass('bg-primary');
+    expect(screen.getByText(`${BASE}/health/ready`)).toBeInTheDocument();
   });
 
   it('checks again when the window gets focus', async () => {

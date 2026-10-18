@@ -1,0 +1,1 @@
+- [Foundations review patterns](project_foundations_review_patterns.md) — recurring frontend misses: mobile line height, safe area, focus on disabled, asset crop parity

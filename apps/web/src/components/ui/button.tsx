@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils';
 const buttonVariants = cva(
   [
     'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium',
-    'transition-colors duration-fast',
+    'transition-colors duration-fast motion-reduce:transition-none',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-cyan',
     'disabled:pointer-events-none disabled:opacity-60',
+    'aria-disabled:pointer-events-none aria-disabled:opacity-60',
     '[&_svg]:pointer-events-none [&_svg]:shrink-0',
   ],
   {
