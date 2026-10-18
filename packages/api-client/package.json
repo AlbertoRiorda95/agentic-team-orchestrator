@@ -1,0 +1,22 @@
+{
+  "name": "@devorchestrator/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API types and client generated from docs/api/openapi.yaml (openapi-typescript + openapi-fetch).",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "gen": "openapi-typescript ../../docs/api/openapi.yaml -o src/schema.d.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "vitest": "^4"
+  }
+}

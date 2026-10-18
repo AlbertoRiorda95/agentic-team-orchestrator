@@ -1,0 +1,66 @@
+# compose.yml: local development stack, API + Postgres (web and mobile dev
+# servers run on the host). Ports and variables: .env.example.
+#   make up            # docker compose up -d --build --wait, with GIT_SHA set
+#   make down          # stop (the database volume is kept)
+#   docker compose down -v   # stop and delete the database
+name: devorchestrator
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      # local development credentials only, never used outside this stack
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: devorchestrator
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d devorchestrator']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: devorchestrator-api:local
+    environment:
+      # the API reaches Postgres on the compose network, not on localhost
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/devorchestrator
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8081}
+      GIT_SHA: ${GIT_SHA:-}
+    ports:
+      - '8000:8000'
+    depends_on:
+      db:
+        condition: service_healthy
+    # healthcheck: the image's HEALTHCHECK (liveness on /api/v1/health)
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    restart: unless-stopped
+
+volumes:
+  db-data:

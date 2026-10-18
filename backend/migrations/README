@@ -1,0 +1,6 @@
+Alembic migrations (async engine). The URL comes from DATABASE_URL.
+
+Revisions are numbered (0001_baseline.py, 0002_<slug>.py, ...), additive and
+reversible: every downgrade() undoes its upgrade(). New revision:
+
+    uv run --directory backend alembic revision --autogenerate --rev-id 0002 -m "<what>"

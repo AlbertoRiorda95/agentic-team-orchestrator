@@ -1,0 +1,20 @@
+# .dockerignore: the build context is the repository root, but the API image
+# only needs backend/. Everything else is excluded (allowlist).
+*
+!backend/
+
+# local and generated files inside backend/
+backend/.venv
+backend/**/__pycache__
+backend/**/*.py[cod]
+backend/.pytest_cache
+backend/.mypy_cache
+backend/.ruff_cache
+backend/.coverage
+backend/.env
+backend/.env.*
+
+# not needed at runtime: tests and the contract export script (dev dependencies)
+backend/tests
+backend/scripts
+backend/Dockerfile
