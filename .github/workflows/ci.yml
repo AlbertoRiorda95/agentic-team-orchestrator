@@ -92,6 +92,8 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
         with:
           python-version: "3.14"
+          enable-cache: ${{ hashFiles('backend/uv.lock') != '' }}
+          cache-dependency-glob: backend/uv.lock
       # dependencies installed without running their scripts: license data come from them
       - name: Install npm dependencies
         if: hashFiles('package-lock.json') != ''
