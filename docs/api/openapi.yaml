@@ -1,0 +1,76 @@
+openapi: 3.1.0
+info:
+  title: DevOrchestrator API
+  version: 0.1.0
+servers:
+- url: http://localhost:8000/api/v1
+  description: local development
+paths:
+  /health:
+    get:
+      tags:
+      - health
+      summary: Liveness
+      description: Always 200 while the process serves requests.
+      operationId: health
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /health/ready:
+    get:
+      tags:
+      - health
+      summary: 'Readiness: database'
+      description: 503 when a check fails. The database check is `SELECT 1` within 2 s.
+      operationId: readiness
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: Not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  schemas:
+    CheckStatus:
+      type: string
+      enum:
+      - ok
+      - failed
+    Health:
+      properties:
+        status:
+          $ref: '#/components/schemas/HealthStatus'
+        checks:
+          additionalProperties:
+            $ref: '#/components/schemas/CheckStatus'
+          type: object
+          title: Checks
+          description: One entry per readiness check, e.g. database.
+        version:
+          type: string
+          title: Version
+          description: API package version, plus +<short sha> when GIT_SHA is set.
+          examples:
+          - 0.1.0+abc1234
+      type: object
+      required:
+      - status
+      title: Health
+      description: Health of the API. Optional fields are omitted, never null.
+    HealthStatus:
+      type: string
+      enum:
+      - ok
+      - degraded
+      - down
