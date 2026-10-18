@@ -32,6 +32,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // Expo, Metro, Jest and Tailwind configs are CommonJS.
+    files: ['apps/mobile/*.js', '**/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     files: ['apps/web/**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },
   },

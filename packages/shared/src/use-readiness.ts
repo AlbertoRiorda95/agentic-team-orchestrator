@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ApiClient } from '@devorchestrator/api-client';
-import { loadReadiness, type ReadinessResult } from '@devorchestrator/shared';
+import { loadReadiness, type ReadinessResult } from './readiness';
 
 export interface ReadinessState {
   loading: boolean;
@@ -10,10 +10,20 @@ export interface ReadinessState {
 }
 
 /**
- * Checks the API readiness on mount, on window focus and on demand (`check`).
- * No polling.
+ * Subscribes to the event that should trigger a re-check (window focus on web, app
+ * foreground on mobile). Calls `onTrigger` and returns the unsubscribe function.
  */
-export function useReadiness(client: ApiClient, baseUrl: string): ReadinessState {
+export type SubscribeToRecheck = (onTrigger: () => void) => () => void;
+
+/**
+ * Checks the API readiness on mount, whenever `subscribe` fires and on demand (`check`).
+ * No polling. `subscribe` must be a stable reference (declare it at module level).
+ */
+export function useReadiness(
+  client: ApiClient,
+  baseUrl: string,
+  subscribe: SubscribeToRecheck,
+): ReadinessState {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<ReadinessResult | null>(null);
   const inFlight = useRef(false);
@@ -35,13 +45,13 @@ export function useReadiness(client: ApiClient, baseUrl: string): ReadinessState
 
   useEffect(() => {
     check();
-    window.addEventListener('focus', check);
+    const unsubscribe = subscribe(check);
     return () => {
-      window.removeEventListener('focus', check);
+      unsubscribe();
       controller.current?.abort();
       inFlight.current = false;
     };
-  }, [check]);
+  }, [check, subscribe]);
 
   return { loading, result, check };
 }
