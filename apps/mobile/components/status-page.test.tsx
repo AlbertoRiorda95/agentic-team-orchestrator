@@ -86,6 +86,18 @@ describe('StatusPage', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('ignores presses and reports busy while it checks', async () => {
+    const onRetry = jest.fn();
+    await render(<StatusView loading result={null} appVersion="0.1.0" onRetry={onRetry} />);
+    const button = screen.getByRole('button', { name: 'Check again' });
+
+    await fireEvent.press(button);
+
+    expect(onRetry).not.toHaveBeenCalled();
+    expect(button).toBeDisabled();
+    expect(button).toBeBusy();
+  });
+
   it('checks again when the app comes back to the foreground', async () => {
     let listener: (state: string) => void = () => {};
     const spy = jest.spyOn(AppState, 'addEventListener').mockImplementation(((
