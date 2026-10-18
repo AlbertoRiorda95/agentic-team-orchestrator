@@ -1,0 +1,28 @@
+{
+  "name": "@devorchestrator/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Design tokens shared by web and mobile: values, CSS variables, Tailwind preset, fonts and brand assets.",
+  "exports": {
+    ".": "./src/tokens.ts",
+    "./tokens.css": "./tokens.css",
+    "./fonts.css": "./fonts.css",
+    "./tailwind-preset": "./tailwind-preset.cjs",
+    "./assets/*": "./assets/*"
+  },
+  "scripts": {
+    "gen": "node scripts/generate.ts",
+    "gen:check": "node scripts/generate.ts --check",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/generate.ts --check && vitest run"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "vitest": "^4"
+  }
+}

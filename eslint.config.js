@@ -14,7 +14,7 @@ export default tseslint.config(
       'backend/**',
       'docs/**',
       'packages/api-client/src/schema.d.ts',
-      'packages/tokens/src/generated/**',
+      'packages/tokens/tailwind-preset.cjs',
     ],
   },
   js.configs.recommended,
