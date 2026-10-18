@@ -23,9 +23,9 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
-    @field_validator("git_sha", mode="before")
+    @field_validator("database_url", "git_sha", mode="before")
     @classmethod
-    def blank_sha_is_unset(cls, value: object) -> object:
+    def blank_is_unset(cls, value: object) -> object:
         if isinstance(value, str) and not value.strip():
             return None
         return value

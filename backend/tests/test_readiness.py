@@ -55,6 +55,9 @@ def test_readiness_waits_two_seconds_by_default(
     assert 1.9 <= elapsed < 3
 
 
-def test_the_app_does_not_start_without_a_database_url(make_client: ClientFactory) -> None:
-    with pytest.raises(RuntimeError, match="DATABASE_URL"), make_client(database_url=None):
+@pytest.mark.parametrize("database_url", [None, "", "  "])
+def test_the_app_does_not_start_without_a_database_url(
+    make_client: ClientFactory, database_url: str | None
+) -> None:
+    with pytest.raises(RuntimeError, match="DATABASE_URL"), make_client(database_url=database_url):
         pass
