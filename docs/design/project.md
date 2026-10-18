@@ -193,9 +193,12 @@ the database indexes them and holds everything the orchestrator owns.
 - Credentials encrypted at rest, key outside the database (round 6).
 
 ## API surface
-The first version of the contract is in `docs/api/openapi.yaml` (v0.1.0,
-OpenAPI 3.1, 76 operations). From the first backend task on it is exported from
-FastAPI with `make openapi`.
+The v0.1.0 design of the contract (OpenAPI 3.1, 76 operations) is in
+`docs/api/openapi-v0.1-design.yaml`: a read-only reference, not generated and
+not used by the clients. The contract itself is `docs/api/openapi.yaml`,
+exported from FastAPI with `make openapi`; it holds only the operations the
+backend has implemented and grows feature by feature. The tables below describe
+the target surface of the design reference.
 
 Conventions: base path `/api/v1`; JSON; UTC ISO 8601 timestamps; UUID ids;
 errors as RFC 9457 `application/problem+json` (with `errors[]` for validation);
