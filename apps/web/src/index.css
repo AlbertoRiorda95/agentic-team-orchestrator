@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+@import '@devorchestrator/tokens/fonts.css';
+@import '@devorchestrator/tokens/tokens.css';
+
+/* The shared Tailwind preset (theme from packages/tokens), also used by NativeWind. */
+@config '../../../packages/tokens/tailwind-preset.cjs';
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  line-height: var(--leading-body);
+}
