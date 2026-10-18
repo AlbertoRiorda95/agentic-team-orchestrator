@@ -50,4 +50,4 @@ down: ## Stop the compose stack (the database volume is kept)
 	docker compose down
 
 smoke: ## Compose smoke test: build, start, check readiness, tear down
-	GIT_SHA=$(GIT_SHA) ci/smoke.sh
+	GIT_SHA=$(GIT_SHA) bash ci/smoke.sh
