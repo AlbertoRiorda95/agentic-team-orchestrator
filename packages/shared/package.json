@@ -1,0 +1,20 @@
+{
+  "name": "@devorchestrator/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript code shared by the web and mobile apps.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@devorchestrator/api-client": "*"
+  },
+  "devDependencies": {
+    "vitest": "^4"
+  }
+}
