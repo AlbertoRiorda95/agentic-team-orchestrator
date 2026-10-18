@@ -1,11 +1,18 @@
 # .github/workflows/claude-review.yml
+# On request only: add the "ai-review" label to a PR to have Claude review it.
+# To review again after new commits, remove the label and add it again.
 name: Review
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
+    types: [labeled]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   review:
+    if: github.event.label.name == 'ai-review'
     runs-on: ubuntu-latest
     permissions:
       contents: read
