@@ -3,7 +3,8 @@
 #   ci/install-scanners.sh            syft, grype and trivy, from the official
 #                                     GitHub releases, verifying the checksums
 #   ci/install-scanners.sh semgrep    only the tools given (semgrep: from PyPI,
-#                                     in its own virtual environment, needs python3)
+#                                     in its own virtual environment, needs python3;
+#                                     actionlint: GitHub release, checksum verified)
 # Linux amd64. CUSTOMIZE: the asset names for arm64 runners.
 set -euo pipefail
 source "$(dirname "$0")/scanners.env"
@@ -31,6 +32,8 @@ for tool in $TOOLS; do
              "grype_${GRYPE_VERSION}_linux_amd64.tar.gz" "grype_${GRYPE_VERSION}_checksums.txt" ;;
     trivy) fetch trivy "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}" \
              "trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" "trivy_${TRIVY_VERSION}_checksums.txt" ;;
+    actionlint) fetch actionlint "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}" \
+             "actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" "actionlint_${ACTIONLINT_VERSION}_checksums.txt" ;;
     semgrep)
       python3 -m venv "$HOME/.local/semgrep-venv"
       "$HOME/.local/semgrep-venv/bin/pip" install --quiet "semgrep==${SEMGREP_VERSION}"

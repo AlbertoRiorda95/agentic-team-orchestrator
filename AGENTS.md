@@ -208,6 +208,11 @@ misconfigurations (`ci/scan.sh`).
   opening the MR (`gh pr checks --watch`), fix what fails and push again.
   Agents that run inside CI jobs do not wait: the user sends the failures
   back.
+- Workflow files: after editing anything in `.github/workflows/`, run
+  `actionlint` (the `Workflow lint` check runs it on every PR). A job-level `if`
+  can use only the `github`, `needs`, `vars`, `inputs` and `matrix` contexts:
+  `hashFiles()` works in steps only, and one in a job `if` makes GitHub reject
+  the whole file, so no job runs.
 
 ## Rules for everyone
 - Small commits, messages in English, imperative mood.

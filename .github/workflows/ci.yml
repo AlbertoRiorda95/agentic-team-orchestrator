@@ -1,5 +1,6 @@
 # .github/workflows/ci.yml: the project's CI. It checks every PR, whoever
-# wrote it (you or an agent): build, test, SBOM and licenses, vulnerabilities.
+# wrote it (you or an agent): build, test, static analysis, SBOM and licenses,
+# vulnerabilities.
 # Toolchain: Node 24 (npm workspaces) and uv with Python 3.14.
 # Actions are pinned to a commit SHA; the comment says which release it is.
 name: CI
@@ -138,7 +139,6 @@ jobs:
           retention-days: 90
 
   ui:
-    if: hashFiles('apps/web/playwright.config.ts') != ''
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
