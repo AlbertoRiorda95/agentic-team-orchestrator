@@ -34,13 +34,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM ${PYTHON_IMAGE} AS runtime
 RUN groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
-# the app runs from /app/.venv: drop the base image's pip/setuptools/wheel (and the
-# libraries they carry), which the vulnerability scan reports and nothing uses
+# the app runs from /app/.venv: drop the base image's own pip/setuptools/wheel
+# (unused, and a source of image vulnerability findings)
 RUN rm -rf /usr/local/lib/python3.14/site-packages/pip* \
         /usr/local/lib/python3.14/site-packages/setuptools* \
-        /usr/local/lib/python3.14/site-packages/wheel* \
-        /usr/local/lib/python3.14/site-packages/_distutils_hack \
         /usr/local/lib/python3.14/site-packages/pkg_resources \
+        /usr/local/lib/python3.14/site-packages/_distutils_hack \
+        /usr/local/lib/python3.14/site-packages/distutils-precedence.pth \
+        /usr/local/lib/python3.14/site-packages/wheel* \
         /usr/local/bin/pip /usr/local/bin/pip3*
 WORKDIR /app
 # owned by root and not writable by the app user: works with a read-only filesystem
