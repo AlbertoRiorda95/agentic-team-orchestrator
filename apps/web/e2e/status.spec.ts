@@ -1,7 +1,7 @@
 // apps/web/e2e/status.spec.ts: the status page in its five states (foundations
 // spec, "Screens and states"), at 320, 768 and 1280 px. The readiness API is
 // mocked with page.route(), so every state is reachable without a backend.
-import { test, expect, type Page, type Route } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const READY = '**/api/v1/health/ready';
@@ -17,7 +17,7 @@ const states: State[] = [
     mock: p => p.route(READY, r => r.fulfill({ status: 503, json: { status: 'down', checks: { database: 'failed' }, version: '0.1.0' } })) },
   { name: 'unreachable', settled: true, mock: p => p.route(READY, r => r.abort('connectionrefused')) },
   // the request never answers: the page stays in its loading state
-  { name: 'loading', settled: false, mock: p => p.route(READY, (_r: Route) => new Promise<void>(() => {})) },
+  { name: 'loading', settled: false, mock: p => p.route(READY, () => new Promise<void>(() => {})) },
 ];
 
 for (const s of states) {
