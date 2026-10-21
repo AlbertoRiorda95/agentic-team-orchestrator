@@ -3,6 +3,8 @@ feature: foundations
 ready: yes              # yes only when the checklist below is complete
 updated: 2026-10-18
 owner: designer
+milestone: M0
+features: foundations   # the roadmap features of M0 this spec implements, written as in project.md
 ---
 
 # Foundations
@@ -291,18 +293,19 @@ alignment entry `2026-10-18-3-frontend.md`):
   crop; it is a brand asset and is not produced in this task.
 
 ## Task breakdown
-| # | Role | Task | Depends on |
-|---|---|---|---|
-| 1 | backend | `backend/`: uv project (Python 3.14, FastAPI, Pydantic v2, pydantic-settings, async SQLAlchemy 2.0, asyncpg, Alembic with empty baseline), `/api/v1` router, `/health` and `/health/ready` with `version`, RFC 9457 handler, CORS from `CORS_ORIGINS`, ruff + mypy + pytest config and tests, an export command for the contract; move v0.1 to `openapi-v0.1-design.yaml`, export the new `openapi.yaml`, update `docs/api/README.md` | — |
-| 2 | frontend | Root `package.json` (workspaces, scripts `lint`, `typecheck`, `test`, `build`, `gen:api`), `tsconfig` base, ESLint + Prettier; `packages/tokens` (values, generated CSS and Tailwind preset, fonts, brand assets); `packages/api-client` (generated types + `openapi-fetch` client factory); `packages/shared` (readiness → page state mapping); `apps/web` (Vite, React 19, Tailwind v4, shadcn Button and Badge, status page, `/api` proxy, Vitest); `apps/mobile` (Expo Router, NativeWind, Reusables, `expo-font`, status page, Jest) | 1 (contract) |
-| 3 | devops | Root `Makefile` (`install`, `lint`, `test`, `build`, `openapi`), `backend/Dockerfile` (uv, Python 3.14 slim, non-root, migrations then server, healthcheck on `/api/v1/health`), `.dockerignore`, `compose.yml` (`api` + `db` Postgres 17 with healthcheck, ports 8000 and 5432, `GIT_SHA`), root `.env.example`; CI: compose smoke job | 1, 2 |
-| 4 | designer | Review the status page on web (320, 768, 1280 px) and mobile (Expo web at a phone viewport) in all states | 2 |
-| 5 | frontend | Apply the review feedback | 4 |
-| 6 | designer | `docs/design/project.md`, API surface: point to the contract split | 1 |
+<!-- Issue: leave "-" for scripts/create-issues.py to create the issue; "#12" when an
+     existing issue already tracks the row; "done" when it is finished. -->
+| # | Role | Task | Depends on | Issue |
+|---|---|---|---|---|
+| 1 | backend | `backend/`: uv project (Python 3.14, FastAPI, Pydantic v2, pydantic-settings, async SQLAlchemy 2.0, asyncpg, Alembic with empty baseline), `/api/v1` router, `/health` and `/health/ready` with `version`, RFC 9457 handler, CORS from `CORS_ORIGINS`, ruff + mypy + pytest config and tests, an export command for the contract; move v0.1 to `openapi-v0.1-design.yaml`, export the new `openapi.yaml`, update `docs/api/README.md` | — | #3 |
+| 2 | frontend | Root `package.json` (workspaces, scripts `lint`, `typecheck`, `test`, `build`, `gen:api`), `tsconfig` base, ESLint + Prettier; `packages/tokens` (values, generated CSS and Tailwind preset, fonts, brand assets); `packages/api-client` (generated types + `openapi-fetch` client factory); `packages/shared` (readiness → page state mapping); `apps/web` (Vite, React 19, Tailwind v4, shadcn Button and Badge, status page, `/api` proxy, Vitest); `apps/mobile` (Expo Router, NativeWind, Reusables, `expo-font`, status page, Jest) | 1 (contract) | #3 |
+| 3 | devops | Root `Makefile` (`install`, `lint`, `test`, `build`, `openapi`), `backend/Dockerfile` (uv, Python 3.14 slim, non-root, migrations then server, healthcheck on `/api/v1/health`), `.dockerignore`, `compose.yml` (`api` + `db` Postgres 17 with healthcheck, ports 8000 and 5432, `GIT_SHA`), root `.env.example`; CI: compose smoke job | 1, 2 | #3 |
+| 4 | designer | Review the status page on web (320, 768, 1280 px) and mobile (Expo web at a phone viewport) in all states | 2 | done |
+| 5 | frontend | Apply the review feedback | 4 | - |
+| 6 | designer | `docs/design/project.md`, API surface: point to the contract split | 1 | - |
 
-Team task possible: yes, and chosen for tasks 1–3 (roles: backend, frontend,
-devops, in this order; one branch, one PR). Tasks 4–5 and 6 follow as separate
-tasks once that PR is open.
+Team task possible: no (tasks 1–3 ran as the team task #3: backend, frontend,
+devops, one branch, one PR; tasks 5 and 6 are separate tasks).
 
 ## Readiness checklist
 - [x] goal, users and out of scope agreed

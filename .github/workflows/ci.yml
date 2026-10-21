@@ -1,5 +1,6 @@
 # .github/workflows/ci.yml: the project's CI. It checks every PR, whoever
-# wrote it (you or an agent): build, test, SBOM and licenses, vulnerabilities.
+# wrote it (you or an agent): build, test, static analysis, SBOM and licenses,
+# vulnerabilities.
 # Toolchain: Node 24 (npm workspaces) and uv with Python 3.14.
 # Actions are pinned to a commit SHA; the comment says which release it is.
 name: CI
@@ -58,12 +59,12 @@ jobs:
       - name: Type check (TypeScript)
         if: hashFiles('package-lock.json') != ''
         run: npm run typecheck
-      - name: API contract is up to date
-        if: hashFiles('backend/pyproject.toml') != ''
+      - name: API client is up to date
+        if: hashFiles('packages/api-client/package.json') != ''
         run: |
-          make openapi
-          git diff --exit-code docs/api/openapi.yaml || {
-            echo "::error::docs/api/openapi.yaml differs from the FastAPI schema: run 'make openapi' and commit it."
+          npm run gen:api
+          git diff --exit-code packages/api-client || {
+            echo "::error::packages/api-client differs from docs/api/openapi.yaml: run 'npm run gen:api' and commit it."
             exit 1
           }
       - name: Migrations apply
@@ -79,6 +80,33 @@ jobs:
         if: hashFiles('apps/mobile/package.json') != ''
         working-directory: apps/mobile
         run: npx expo export --platform all
+
+  compose-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GIT_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+      - run: bash ci/smoke.sh
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+        with:
+          fetch-depth: 0
+      - run: ./ci/install-scanners.sh semgrep
+      - run: ./ci/scan.sh static
+        env:
+          BASELINE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        if: always()
+        with:
+          name: static-analysis
+          path: reports/semgrep.*
+          retention-days: 30
 
   sbom-licenses:
     runs-on: ubuntu-latest
@@ -109,6 +137,25 @@ jobs:
           name: sbom-and-licenses
           path: reports/
           retention-days: 90
+
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm exec -w apps/web -- playwright test
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: ui-report
+          path: apps/web/reports/ui/
+          retention-days: 30
 
   vulnerabilities:
     needs: sbom-licenses

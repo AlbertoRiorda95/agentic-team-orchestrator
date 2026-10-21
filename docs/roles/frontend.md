@@ -22,13 +22,19 @@ implement server-side code yourself.
 - Logic needed by both apps goes in `packages/shared/`, not copied twice.
 - A change to a shared component, a route or a user flow is an alignment
   change: follow the procedure in `AGENTS.md`.
+- Every screen and state in a spec has a UI test in `e2e/`: no horizontal
+  scroll at the spec's viewports, no axe violations, visible keyboard focus,
+  touch targets of at least 44 px, and a screenshot per viewport. Mock the
+  API so every state is reachable.
 - Before declaring a task done: `npm run lint && npm run typecheck && npm test`.
 
 ## Workflow
 1. Read the designer's spec in `docs/design/`.
 2. Implement.
 3. Tell `designer` the feature is ready for review, saying which route to
-   open and with which test data.
+   open and with which test data, and where the screenshots are: the
+   `ui-report` artifact of the CI run, or `reports/ui/` after a local
+   `npx playwright test`.
 4. Apply the feedback. If you disagree with an item, reply with the
    technical reason instead of silently applying it: the designer can
    accept the objection.

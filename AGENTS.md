@@ -145,6 +145,29 @@ or a request in a local session.
 - Use team tasks for small, tightly coupled features. Larger work stays split
   into separate tasks, so that each MR remains reviewable.
 
+## Splitting issues
+In CI the user can ask for a proposal that splits one issue into task issues,
+one per role: the `agent:split` label on GitHub, `SPLIT_ISSUE` on GitLab. The
+proposal is a plan in the format at the top of `scripts/split-issue.py`; the
+user approves it (`@claude ok`) and the script creates exactly that. Rules for
+the plan:
+- One task per role and per boundary (see "How work is delegated"): a task
+  never makes two roles edit the same files.
+- Follow the standard feature sequence: the API contract first when the
+  feature changes it, then backend and frontend against it; devops only if
+  the pipeline, the image or the manifests change.
+- No ready spec for the work: propose a single designer task that writes it,
+  or say in a comment that a design studio session with the user is needed.
+  Never plan implementation tasks on missing design.
+- optimizer and security only when the issue asks for them explicitly.
+- At most 6 tasks. If more are needed, say so and propose splitting the issue
+  into features first.
+- Every task has acceptance criteria someone can check without reading the
+  code, and lists the files or folders it touches.
+- Suggest a team task (`team` in the plan) when the work is small and tightly
+  coupled (see "Team tasks").
+- Never add labels: the user starts each task.
+
 ## Specs before code
 Implementation tasks start from a spec in `docs/design/` marked `ready: yes`
 (see `docs/design/_spec-template.md`). The project design is
@@ -166,15 +189,30 @@ Implementation tasks start from a spec in `docs/design/` marked `ready: yes`
   `docs/alignment/` since you started; if it did, adapt or report it.
 
 ## CI
-Every MR runs the project CI: build, test, SBOM and license report, license
-policy, vulnerabilities, secrets and misconfigurations (`ci/scan.sh`).
+Every MR runs the project CI: build, type check, test, static analysis, SBOM
+and license report, license policy, vulnerabilities, secrets and
+misconfigurations (`ci/scan.sh`).
 - A red CI is part of your task: fix the cause, never weaken the check. Do not
   edit `ci/scanners.env`, skip a test or add an ignore rule without the user's
   explicit approval in the MR.
+- Static analysis: semgrep fails the MR on the findings your change
+  introduces (details in `semgrep.txt`, artifact `static-analysis`). Fix the
+  code. If you think a finding is a false positive, do not suppress it
+  yourself: explain it in the MR under `## Static analysis` and let the user
+  decide. A `nosemgrep: <rule-id>` comment, with the reason next to it, only
+  with the user's approval.
+- UI tests: when `playwright.config.ts` exists, the `ui` job runs the tests
+  in `e2e/` and keeps the report and the screenshots per viewport (artifact
+  `ui-report`). A screen or state without its UI test is not done.
 - When you run outside CI (a local session), wait for the checks after
   opening the MR (`gh pr checks --watch`), fix what fails and push again.
   Agents that run inside CI jobs do not wait: the user sends the failures
   back.
+- Workflow files: after editing anything in `.github/workflows/`, run
+  `actionlint` (the `Workflow lint` check runs it on every PR). A job-level `if`
+  can use only the `github`, `needs`, `vars`, `inputs` and `matrix` contexts:
+  `hashFiles()` works in steps only, and one in a job `if` makes GitHub reject
+  the whole file, so no job runs.
 
 ## Rules for everyone
 - Small commits, messages in English, imperative mood.

@@ -1,9 +1,12 @@
 import type { ExpoConfig } from 'expo/config';
-import { colors } from '@devorchestrator/tokens';
-
 const appIcon = '../../packages/tokens/assets/app-icon.png';
 
-// Static colors of the native shell (splash screen, adaptive icon) come from the tokens.
+// Expo loads this file with Node, which cannot run the TypeScript source of
+// @devorchestrator/tokens (`as const` fails to parse). So the color is repeated here:
+// keep it equal to `colors.bg` in packages/tokens/src/tokens.ts.
+const colors = { bg: '#111B30' };
+
+// Static colors of the native shell (splash screen, adaptive icon).
 const config: ExpoConfig = {
   name: 'DevOrchestrator',
   slug: 'devorchestrator',
