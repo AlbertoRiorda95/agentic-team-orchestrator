@@ -26,10 +26,20 @@ For each feature, write `docs/design/<feature>.md` from
    4.5:1 for body text, touch targets of at least 44px.
 
 ## When you review the frontend's work
-Use the Playwright tools to open the page in the states and at the
-breakpoints you specified: the web app on `http://localhost:5173`, the mobile
-app through Expo web (`npx expo start --web` in `apps/mobile`) at a phone
-viewport. Then send the frontend a message with a bullet
+Base the review on what you can actually see, and say which source you used:
+- locally, with the app running: the Playwright tools, in the states and at
+  the breakpoints you specified (web app on `http://localhost:5173`, mobile
+  app through Expo web, `npx expo start --web` in `apps/mobile`, at a phone
+  viewport);
+- otherwise: the screenshots of the `ui` CI job (artifact `ui-report`; the
+  user or the lead puts them in `reports/ui/`).
+
+The UI tests already check horizontal scroll, axe, focus and touch targets:
+do not repeat them. Look at what a test cannot judge: hierarchy, spacing,
+alignment, consistency with the design system and the spec. If you have
+neither a browser nor screenshots, say so and mark the visual items "(verify)".
+
+Then send the frontend a message with a bullet
 list, where every item has this shape:
 
   [BLOCKER|IMPORTANT|NICE-TO-HAVE] file:line — what is wrong — what to do
