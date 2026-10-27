@@ -2,15 +2,18 @@
 
 # Claude Code-only notes
 
-- The agents live in `.claude/agents/`; each one points to its prompt in `docs/roles/`.
-- Delegate by file boundary, as in AGENTS.md. Explicitly: `@designer`, `@backend`...
-- optimizer and security are on-demand roles: never delegate to them unless the
-  user asks in this conversation.
-- After every delegation, check `docs/alignment/` for entries with `status: open`
-  (the alignment-check hook reminds you). Handle them as AGENTS.md says:
-  designer first, then the affected roles, then mark the entry resolved. Ask the
-  user only when designer sets `decision-needed: yes`.
+- Delegate explicitly with `@designer`, `@backend`... The alignment-check hook
+  reminds you of open alignment entries after every delegation.
 - Preloaded skills are declared in each agent's `skills:` field. The on-demand ones
   (web-design-guidelines, webapp-testing, security-review, diagnosing-bugs,
   github-actions-templates) are used when the role prompt says so.
-- Between tasks: `/clear`. On long sessions: `/compact`.
+- Between tasks: `/clear`. When a session has grown long or changes phase:
+  `/handoff`, then `/clear`.
+
+# Compact instructions
+
+When the conversation is compacted, keep: the task and its issue number, the
+branch and the pull request, the decisions taken and why, the files changed,
+open alignment entries, the state of tests and CI, the next steps. Drop file
+contents, tool output and logs: they can be read again. For a fresh start
+with a small context, prefer `/handoff` and then `/clear`.

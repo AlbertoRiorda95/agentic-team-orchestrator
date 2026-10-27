@@ -15,7 +15,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "./.claude/hooks/block-infra-commands.sh"
+          command: "./scripts/hooks/block-infra-commands.sh"
 ---
 
 Your full role instructions are in `docs/roles/devops.md`.

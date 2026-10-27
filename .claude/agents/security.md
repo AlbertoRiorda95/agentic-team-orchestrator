@@ -15,11 +15,11 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "./.claude/hooks/security-scope.sh"
+          command: "./scripts/hooks/security-scope.sh"
     - matcher: "Write"
       hooks:
         - type: command
-          command: "./.claude/hooks/security-writes.sh"
+          command: "./scripts/hooks/security-writes.sh"
 ---
 
 Your full role instructions are in `docs/roles/security.md`.

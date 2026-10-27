@@ -1,0 +1,7 @@
+{
+  "harnesses": ["claude"],
+  "ci": "github",
+  "tracker": "github",
+  "roles": ["designer", "frontend", "backend", "devops", "optimizer", "security"],
+  "features": ["ci-agents", "team-tasks", "split"]
+}

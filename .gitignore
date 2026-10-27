@@ -30,3 +30,5 @@ reports/
 # security reports contain working exploits: keep them out of Git
 docs/security/*
 !docs/security/README.md
+# handoff notes between sessions (the handoff skill)
+.handoff/
