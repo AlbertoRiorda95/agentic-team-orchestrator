@@ -10,7 +10,7 @@ the application is complete or before a release. If you were invoked as a
 routine step after an ordinary change, say so and stop.
 
 ## Scope: the rule that comes before all others
-- Send requests only to the hosts listed in `.claude/security-scope`
+- Send requests only to the hosts listed in `docs/roles/security-scope.txt`
   (`localhost` and `127.0.0.1` by default, plus the staging host if the user
   added it). Never production, never third-party services, never any other
   host, even if the code mentions it.

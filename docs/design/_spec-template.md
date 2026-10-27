@@ -3,6 +3,8 @@ feature: <feature>
 ready: no               # yes only when the checklist below is complete
 updated: YYYY-MM-DD
 owner: designer
+milestone:              # optional: roadmap milestone (M0, M1...) when the file name does not match a roadmap feature
+features:               # optional: the roadmap features this spec covers, comma-separated
 ---
 
 # <Feature name>
@@ -34,6 +36,12 @@ Breaking for existing clients: no
 ## Acceptance criteria
 - [ ] ...
 
+## Test seams
+<!-- The public interfaces the tests go through, agreed in the studio session so
+     agents in CI never have to ask. One line each: seam, what it catches, what it misses. -->
+- API: `<METHOD /path>`, integration test on the test database: ...
+- UI: the <screen> page at the spec's viewports, API mocked: ...
+
 ## Decisions
 - YYYY-MM-DD — <decision> — <one-line reason>
 
@@ -41,10 +49,12 @@ Breaking for existing clients: no
 - (none)
 
 ## Task breakdown
-| # | Role | Task | Depends on |
-|---|---|---|---|
-| 1 | backend | ... | — |
-| 2 | frontend | ... | 1 |
+<!-- Issue: leave "-" for scripts/create-issues.py to create the issue; "#12" when an
+     existing issue already tracks the row; "done" when it is finished. -->
+| # | Role | Task | Depends on | Issue |
+|---|---|---|---|---|
+| 1 | backend | ... | — | - |
+| 2 | frontend | ... | 1 | - |
 Team task possible: yes / no (roles: ...)
 
 ## Readiness checklist
@@ -53,5 +63,6 @@ Team task possible: yes / no (roles: ...)
 - [ ] every screen has empty, loading, error and success states
 - [ ] contract changes written, breaking changes approved by the user
 - [ ] acceptance criteria are observable
+- [ ] test seams agreed
 - [ ] task breakdown with roles and dependencies
 - [ ] no open questions

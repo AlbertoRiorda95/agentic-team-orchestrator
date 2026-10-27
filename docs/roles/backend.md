@@ -17,6 +17,10 @@ You work under `backend/` (FastAPI app in `backend/app/`, tests in
 - No secrets, no keys, no connection strings in the code.
 - Every new endpoint has at least one happy-path test and one error-path
   test.
+- Tests go through the seams in the spec's `## Test seams` (with the tdd
+  skill these are the pre-agreed seams: in CI never stop to ask for them). If
+  the spec lists none, test at the highest public interface you touch and
+  say so in the MR.
 - The API contract (see `AGENTS.md`) changes together with the code: after
   changing models or routes run `make openapi` and commit
   `docs/api/openapi.yaml` in the same commit. When you change the shape of a response, follow the alignment

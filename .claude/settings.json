@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./.claude/hooks/block-infra-commands.sh"
+            "command": "./scripts/hooks/block-infra-commands.sh"
           }
         ]
       }
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./.claude/hooks/alignment-check.sh"
+            "command": "./scripts/hooks/alignment-check.sh"
           }
         ]
       }
@@ -55,10 +55,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./.claude/hooks/gate-test.sh"
+            "command": "./scripts/hooks/gate-test.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/hooks/handoff-pointer.sh"
           }
         ]
       }
     ]
-  }
+  },
+  "autoCompactWindow": 200000
 }

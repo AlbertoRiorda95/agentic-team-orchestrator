@@ -22,10 +22,15 @@ implement server-side code yourself.
 - Logic needed by both apps goes in `packages/shared/`, not copied twice.
 - A change to a shared component, a route or a user flow is an alignment
   change: follow the procedure in `AGENTS.md`.
-- Every screen and state in a spec has a UI test in `e2e/`: no horizontal
+- Every screen and state in a spec has a UI test in `e2e/` (start from
+  `e2e/ui.spec.ts.example`): no horizontal
   scroll at the spec's viewports, no axe violations, visible keyboard focus,
   touch targets of at least 44 px, and a screenshot per viewport. Mock the
   API so every state is reachable.
+- Tests go through the seams in the spec's `## Test seams` (with the tdd
+  skill these are the pre-agreed seams: in CI never stop to ask for them). If
+  the spec lists none, test at the highest public interface you touch and
+  say so in the MR.
 - Before declaring a task done: `npm run lint && npm run typecheck && npm test`.
 
 ## Workflow

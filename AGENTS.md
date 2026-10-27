@@ -51,38 +51,60 @@ The root `Makefile` is the entry point for agents, hooks and CI.
 
 ## How work is delegated in this project
 Route by file boundary, not by topic:
+<!-- agent-team:if role_frontend -->
 - `apps/web/`, `apps/mobile/`, `packages/`, root `package.json`,
   `package-lock.json` and `tsconfig*.json` → frontend
+<!-- agent-team:end -->
+<!-- agent-team:if role_backend -->
 - `backend/` (except `backend/Dockerfile`), `docs/api/openapi.yaml` → backend
+<!-- agent-team:end -->
+<!-- agent-team:if role_designer -->
 - `docs/design/`, UI review → designer
+<!-- agent-team:end -->
+<!-- agent-team:if role_devops -->
 - `.github/workflows/`, `ci/`, `Dockerfile*` (including `backend/Dockerfile`),
   `.dockerignore`, `compose*.yml`, `Makefile`, `deploy/`, `charts/`, `infra/` → devops
+<!-- agent-team:end -->
+<!-- agent-team:if role_optimizer -->
 - Optimizing code that already works and is tested → optimizer
+<!-- agent-team:end -->
 
 Two agents never edit the same file in the same round. If a task crosses
 a boundary, split it into two tasks with an explicit dependency.
 
 ## Standard feature sequence
-1. designer writes the spec in `docs/design/`
-2. backend updates the API contract, if the feature changes it
-3. backend and frontend implement in parallel, against that contract
-4. designer reviews the implementation
-5. frontend applies the feedback
-6. devops updates pipeline, image and manifests if the feature needs it
-7. the MR is opened
+When you plan or lead a feature with several roles: read
+`docs/agents/workflow.md` for the order of the roles. Involve only the
+roles the task actually touches.
 
-Not every feature involves every role. A style change does not need
-devops; an infrastructure migration does not need the designer. Involve
-only the roles the task actually touches.
+## Leading a session
+Each role is an agent of the harness you use, pointing to its prompt in
+`docs/roles/`:
+<!-- agent-team:if harness_claude -->
+- Claude Code: `.claude/agents/` (`@backend`, `@designer`...)
+<!-- agent-team:end -->
+
+When you lead (you are not one of the roles):
+- Delegate by file boundary, as above, and only to the roles the task touches.
+- After every delegation, check `docs/alignment/` for entries with
+  `status: open` and handle them as in "Alignment changes": designer first,
+  then the affected roles, then mark the entry resolved. Ask the user only
+  when designer sets `decision-needed: yes`.
+- Between tasks start a fresh session. When one has grown long or changes
+  phase, write a handoff note first (the handoff skill, in `.handoff/`).
 
 ## On-demand roles
 These two roles are never part of the standard sequence. Delegate to them
 only when the user asks explicitly.
+<!-- agent-team:if role_optimizer -->
 - optimizer: when the user asks for an optimization or a measurement shows
   a performance problem. Only with green tests.
+<!-- agent-team:end -->
+<!-- agent-team:if role_security -->
 - security: when the user asks for a security assessment, typically once the
   application is complete or before a release. It reports findings; the
   owning roles fix them as separate tasks.
+<!-- agent-team:end -->
 
 ## API contract
 The contract between frontend and backend is `docs/api/openapi.yaml`.
@@ -102,72 +124,31 @@ The contract between frontend and backend is `docs/api/openapi.yaml`.
   authentication or authorization requirements; changing the shape of an
   event. A breaking change is always an alignment change and needs the
   user's approval in the MR.
+- Prefer expand-contract to a breaking change. Expand: add the new field or
+  endpoint next to the old one (not breaking). Migrate: move the callers, in
+  their own tasks. Contract: remove the old form in a last task, once nothing
+  uses it; only this step is breaking. `main` stays green at every step.
 
 ## Alignment changes
 A change is an alignment change when another role relies on what you
 changed: the API contract, the data model, a shared component or design
-token, a route or user flow, an environment variable or port, the deployment
-interface.
+token, a route or user flow, an environment variable or port, the
+deployment interface. When you make one, read and follow
+`docs/agents/alignment.md` before opening the MR. Never adapt other
+roles' code yourself.
 
-When you make one:
-1. Copy `docs/alignment/_template.md` to
-   `docs/alignment/<yyyy-mm-dd>-<task-id>.md` and fill it in, with
-   `status: open`. One file per change, so parallel branches never conflict.
-2. In the MR description add an `## Alignment impact` section that links the
-   entry (write "none" when there is none). In CI also add the
-   `alignment-needed` label to the MR.
-3. Do not adapt other roles' code yourself.
-
-What happens next depends on where you run:
-- **Local session (Claude Code with subagents or agent teams):** the lead
-  handles it right away. First designer reviews the change against the specs,
-  updates `docs/design/` if needed and writes the follow-up actions per role
-  in the entry. Then the lead delegates each action to its role. Finally the
-  entry gets `status: resolved` and a short resolution. The lead stops and asks
-  the user only when designer sets `decision-needed: yes` (for example a
-  breaking API change or a visible UX change).
-- **CI (GitHub Actions):** agents never start other
-  agents, except the coordinator of a team task (below). The entry and the
-  label are the signal: the user reviews them and creates the alignment
-  tasks, designer first, then the affected roles.
-
+<!-- agent-team:if team_tasks -->
 ## Team tasks
-A team task is one issue carried out by several roles in sequence on the same
-branch, ending in one MR. The user asks for it explicitly: the `agent:team`
-label on GitHub (with a `Roles: backend, frontend` line in the issue body),
-or a request in a local session.
-- A coordinator delegates only to the listed roles, in the listed order, and
-  writes no code itself.
-- Each role works within its own boundaries and commits and pushes before the
-  next one starts.
-- Alignment entries that concern listed roles are handled inside the task;
-  the others stay open and are reported in the MR.
-- Use team tasks for small, tightly coupled features. Larger work stays split
-  into separate tasks, so that each MR remains reviewable.
+Only when the user asks for one (`agent:team` on GitHub, `AI_FLOW_ROLES`
+on GitLab, or in a local session): read `docs/agents/team-tasks.md`.
 
+<!-- agent-team:end -->
+<!-- agent-team:if split -->
 ## Splitting issues
-In CI the user can ask for a proposal that splits one issue into task issues,
-one per role: the `agent:split` label on GitHub, `SPLIT_ISSUE` on GitLab. The
-proposal is a plan in the format at the top of `scripts/split-issue.py`; the
-user approves it (`@claude ok`) and the script creates exactly that. Rules for
-the plan:
-- One task per role and per boundary (see "How work is delegated"): a task
-  never makes two roles edit the same files.
-- Follow the standard feature sequence: the API contract first when the
-  feature changes it, then backend and frontend against it; devops only if
-  the pipeline, the image or the manifests change.
-- No ready spec for the work: propose a single designer task that writes it,
-  or say in a comment that a design studio session with the user is needed.
-  Never plan implementation tasks on missing design.
-- optimizer and security only when the issue asks for them explicitly.
-- At most 6 tasks. If more are needed, say so and propose splitting the issue
-  into features first.
-- Every task has acceptance criteria someone can check without reading the
-  code, and lists the files or folders it touches.
-- Suggest a team task (`team` in the plan) when the work is small and tightly
-  coupled (see "Team tasks").
-- Never add labels: the user starts each task.
+When you are asked to propose how to split an issue into task issues
+(`agent:split`, `SPLIT_ISSUE`): read `docs/agents/splitting.md`.
 
+<!-- agent-team:end -->
 ## Specs before code
 Implementation tasks start from a spec in `docs/design/` marked `ready: yes`
 (see `docs/design/_spec-template.md`). The project design is
@@ -180,39 +161,15 @@ Implementation tasks start from a spec in `docs/design/` marked `ready: yes`
   review.
 
 ## Branches and merge requests
-- One branch per task, named `feat/<task-id>-<slug>` (in GitHub Actions, the
-  branch the action creates for you).
-- Before opening the MR, bring your branch up to date with `main` and run the
-  tests again. Where you are not allowed to rebase (the Claude GitHub action),
-  say in the MR that the branch must be updated before merging.
-- Before opening the MR, check whether `main` changed the API contract or
-  `docs/alignment/` since you started; if it did, adapt or report it.
+One branch per task. Before opening or updating an MR: read
+`docs/agents/merge-requests.md` (branch name, update from `main`,
+description sections).
 
 ## CI
-Every MR runs the project CI: build, type check, test, static analysis, SBOM
-and license report, license policy, vulnerabilities, secrets and
-misconfigurations (`ci/scan.sh`).
-- A red CI is part of your task: fix the cause, never weaken the check. Do not
-  edit `ci/scanners.env`, skip a test or add an ignore rule without the user's
-  explicit approval in the MR.
-- Static analysis: semgrep fails the MR on the findings your change
-  introduces (details in `semgrep.txt`, artifact `static-analysis`). Fix the
-  code. If you think a finding is a false positive, do not suppress it
-  yourself: explain it in the MR under `## Static analysis` and let the user
-  decide. A `nosemgrep: <rule-id>` comment, with the reason next to it, only
-  with the user's approval.
-- UI tests: when `playwright.config.ts` exists, the `ui` job runs the tests
-  in `e2e/` and keeps the report and the screenshots per viewport (artifact
-  `ui-report`). A screen or state without its UI test is not done.
-- When you run outside CI (a local session), wait for the checks after
-  opening the MR (`gh pr checks --watch`), fix what fails and push again.
-  Agents that run inside CI jobs do not wait: the user sends the failures
-  back.
-- Workflow files: after editing anything in `.github/workflows/`, run
-  `actionlint` (the `Workflow lint` check runs it on every PR). A job-level `if`
-  can use only the `github`, `needs`, `vars`, `inputs` and `matrix` contexts:
-  `hashFiles()` works in steps only, and one in a job `if` makes GitHub reject
-  the whole file, so no job runs.
+A red CI is part of your task: fix the cause, never weaken a check (no
+edits to `ci/scanners.env`, skipped tests or ignore rules without the
+user's approval in the MR). When a check fails, or when you touch tests,
+UI screens, workflows or CI files: read `docs/agents/ci.md`.
 
 ## Rules for everyone
 - Small commits, messages in English, imperative mood.
