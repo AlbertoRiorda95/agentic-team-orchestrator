@@ -302,7 +302,7 @@ alignment entry `2026-10-18-3-frontend.md`):
 | 3 | devops | Root `Makefile` (`install`, `lint`, `test`, `build`, `openapi`), `backend/Dockerfile` (uv, Python 3.14 slim, non-root, migrations then server, healthcheck on `/api/v1/health`), `.dockerignore`, `compose.yml` (`api` + `db` Postgres 17 with healthcheck, ports 8000 and 5432, `GIT_SHA`), root `.env.example`; CI: compose smoke job | 1, 2 | #3 |
 | 4 | designer | Review the status page on web (320, 768, 1280 px) and mobile (Expo web at a phone viewport) in all states | 2 | done |
 | 5 | frontend | Apply the review feedback | 4 | - |
-| 6 | designer | `docs/design/project.md`, API surface: point to the contract split | 1 | - |
+| 6 | designer | `docs/design/project.md`, API surface: point to the contract split | 1 | done |
 
 Team task possible: no (tasks 1–3 ran as the team task #3: backend, frontend,
 devops, one branch, one PR; tasks 5 and 6 are separate tasks).
